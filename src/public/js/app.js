@@ -51,7 +51,7 @@ function handleRoomSubmit(event) {
   roomName = roomNameInput.value;
   roomNameInput.value = "";
   const changeNameInput = room.querySelector("#name input");
-  console.log(nickNameInput.value, ":check nick");
+
   changeNameInput.value = nickNameInput.value;
 }
 
@@ -66,3 +66,18 @@ socket.on("bye", (user) => {
 });
 
 socket.on("new_message", addMessage);
+
+socket.on("room_change", (rooms) => {
+  const roomList = welcome.querySelector("ul");
+  if (rooms.length === 0) {
+    roomList.innerHTML = "";
+    return;
+  }
+  console.log(rooms, "rooms check");
+  console.log(roomList, "check roomlist");
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.appendChild(li);
+  });
+});

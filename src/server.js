@@ -15,8 +15,24 @@ httpServer.listen(3000, handleListen);
 
 const io = new Server(httpServer);
 
+function publicRooms() {
+  const {
+    sockets: {
+      adapter: { sids, rooms },
+    },
+  } = io;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+}
+
 io.on("connection", (socket) => {
   socket.onAny((event) => {
+    //console.log(io.sockets.adapter, "adaptar");
     console.log(`Socket Event: ${event}`);
   });
 
@@ -25,12 +41,17 @@ io.on("connection", (socket) => {
     socket.join(roomName);
     done();
     socket.to(roomName).emit("welcome", socket.nickname);
+    // 모든 사람에게 공지
+    io.sockets.emit("room_change", publicRooms());
   });
 
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) =>
       socket.to(room).emit("bye", socket.nickname)
     );
+  });
+  socket.on("disconnect", () => {
+    io.sockets.emit("room_change", publicRooms());
   });
 
   socket.on("new_message", (msg, room, done) => {
