@@ -16,12 +16,12 @@ httpServer.listen(3000, handleListen);
 const io = new Server(httpServer);
 
 io.on("connection", (socket) => {
-  socket["nickname"] = "Anoymous";
   socket.onAny((event) => {
     console.log(`Socket Event: ${event}`);
   });
 
-  socket.on("enter_room", (roomName, done) => {
+  socket.on("enter_room", (roomName, nickname, done) => {
+    socket["nickname"] = nickname;
     socket.join(roomName);
     done();
     socket.to(roomName).emit("welcome", socket.nickname);
@@ -41,30 +41,3 @@ io.on("connection", (socket) => {
 
   socket.on("nickname", (nickname) => (socket["nickname"] = nickname));
 });
-
-////http and ws Server same Server
-//const server = http.createServer(app);
-//const wss = new WebSocketServer({ server });
-
-//server.listen(3000, handleListen);
-
-//const backSocket = [];
-
-//wss.on("connection", (socket) => {
-//  console.log("Connected to Browser ✅");
-//  backSocket.push(socket);
-
-//  socket["nickname"] = "annoys";
-//  socket.on("close", () => console.log("Disconnected from the Browser ❌"));
-//  socket.on("message", (msg) => {
-//    const message = JSON.parse(msg);
-//    switch (message.type) {
-//      case "new_message":
-//        backSocket.forEach((aSocket) =>
-//          aSocket.send(`${socket.nickname}: ${message.payload}`)
-//        );
-//      case "nickname":
-//        socket["nickname"] = message.payload;
-//    }
-//  });
-//});
