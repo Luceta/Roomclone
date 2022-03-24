@@ -1,7 +1,6 @@
 import express from "express";
-import WebSocket, { WebSocketServer } from "ws";
 import http from "http";
-import { SocketAddress } from "net";
+import { Server } from "socket.io";
 
 const app = express();
 app.set("view engine", "pug");
@@ -11,30 +10,56 @@ app.use("/public", express.static(__dirname + "/public"));
 app.get("/", (req, res) => res.render("home"));
 
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
+const httpServer = http.createServer(app);
+httpServer.listen(3000, handleListen);
 
-////http and ws Server same Server
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const io = new Server(httpServer);
 
-server.listen(3000, handleListen);
+io.on("connection", (socket) => {
+  socket.onAny((event) => {
+    console.log(`Socket Event: ${event}`);
+  });
 
-const backSocket = [];
+  socket.on("enter_room", (roomName, done) => {
+    socket.join(roomName);
+    done();
+    socket.to(roomName).emit("welcome");
+  });
 
-wss.on("connection", (socket) => {
-  console.log("Connected to Browser ✅");
-  backSocket.push(socket);
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+  });
 
-  socket["nickname"] = "annoys";
-  socket.on("close", () => console.log("Disconnected from the Browser ❌"));
-  socket.on("message", (msg) => {
-    const message = JSON.parse(msg);
-    switch (message.type) {
-      case "new_message":
-        backSocket.forEach((aSocket) =>
-          aSocket.send(`${socket.nickname}: ${message.payload}`)
-        );
-      case "nickname":
-        socket["nickname"] = message.payload;
-    }
+  socket.on("new_message", (msg, room, done) => {
+    console.log(msg, room);
+    socket.to(room).emit("new_message", msg);
+    done();
   });
 });
+
+////http and ws Server same Server
+//const server = http.createServer(app);
+//const wss = new WebSocketServer({ server });
+
+//server.listen(3000, handleListen);
+
+//const backSocket = [];
+
+//wss.on("connection", (socket) => {
+//  console.log("Connected to Browser ✅");
+//  backSocket.push(socket);
+
+//  socket["nickname"] = "annoys";
+//  socket.on("close", () => console.log("Disconnected from the Browser ❌"));
+//  socket.on("message", (msg) => {
+//    const message = JSON.parse(msg);
+//    switch (message.type) {
+//      case "new_message":
+//        backSocket.forEach((aSocket) =>
+//          aSocket.send(`${socket.nickname}: ${message.payload}`)
+//        );
+//      case "nickname":
+//        socket["nickname"] = message.payload;
+//    }
+//  });
+//});
