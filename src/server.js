@@ -40,14 +40,14 @@ io.on("connection", (socket) => {
     socket["nickname"] = nickname;
     socket.join(roomName);
     done();
-    socket.to(roomName).emit("welcome", socket.nickname);
+    socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
     // 모든 사람에게 공지
     io.sockets.emit("room_change", publicRooms());
   });
 
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) =>
-      socket.to(room).emit("bye", socket.nickname)
+      socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1)
     );
   });
   socket.on("disconnect", () => {
@@ -62,3 +62,7 @@ io.on("connection", (socket) => {
 
   socket.on("nickname", (nickname) => (socket["nickname"] = nickname));
 });
+
+function countRoom(roomname) {
+  return io.sockets.adapter.rooms.get(roomname)?.size;
+}
