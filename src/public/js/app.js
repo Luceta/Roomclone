@@ -91,6 +91,16 @@ function handleCameraClick() {
 
 async function handleCameraChange() {
   await getMedia(cameraSelect.value);
+  if (myPeerConnection) {
+    const videoTrack = myStream.getVideoTracks()[0];
+    const videoSender = myPeerConnection
+      .getSenders()
+      .find((sender) => sender.track.kind === "video");
+
+    console.log(videoTrack, "video track");
+    console.log(videoSender, "video sender");
+    videoSender.replaceTrack(videoTrack);
+  }
 }
 
 muteBtn.addEventListener("click", handleMuteClick);
@@ -168,7 +178,7 @@ function handleAddStream(data) {
   console.log(myStream, "my stream");
   console.log(data.stream, "peer stream");
   console.log(peerFace, "peer");
-  peerFace.srcObject = data.stream;
-
-  peerFace.srcObject = data.stream[0];
+  //peerFace.srcObject = data.stream;
+  console.log(peerFace, "check");
+  peerFace.src = URL.createObjectURL(data.stream);
 }
