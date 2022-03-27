@@ -14,3 +14,11 @@ const httpServer = http.createServer(app);
 httpServer.listen(3000, handleListen);
 
 const io = new Server(httpServer);
+
+io.on("connection", (socket) => {
+  socket.on("join_room", (roomName, done) => {
+    socket.join(roomName);
+    done();
+    socket.to(roomName).emit("welcome");
+  });
+});
